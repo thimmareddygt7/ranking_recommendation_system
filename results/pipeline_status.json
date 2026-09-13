@@ -1,0 +1,7 @@
+{
+  "status": "SUCCESS",
+  "stages": {
+    "stage_1_retrieval": "implicit_als",
+    "stage_2_ranking": "lightgbm_lambdarank"
+  }
+}
