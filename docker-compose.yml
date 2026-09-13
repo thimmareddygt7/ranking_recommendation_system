@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  rec-ranking-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ranking_recommendation_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models:ro
+      - ./config.yaml:/app/config.yaml:ro
+    environment:
+      - PORT=8000
+    restart: unless-stopped
