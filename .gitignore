@@ -1,0 +1,14 @@
+# Raw and processed datasets
+data/raw/
+data/processed/*.parquet
+*.parquet
+*.csv
+
+# Cache and checkpoints
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Large model artifacts (optional, if >100MB)
+models/*.pkl
