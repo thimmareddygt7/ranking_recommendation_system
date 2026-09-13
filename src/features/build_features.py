@@ -11,7 +11,7 @@ def extract_item_categories():
     if not os.path.exists(prop_path):
         print("Property file not found, continuing without explicit categories...")
         return None
-    
+
     # Read properties and filter for categoryid
     props = pd.read_csv(prop_path)
     cat_props = props[props['property'] == 'categoryid'][['itemid', 'value']].drop_duplicates('itemid')
@@ -30,7 +30,7 @@ def build_features():
     # 1. User Profile Features (Computed strictly on train set)
     print("Engineering user features...")
     user_grp = train_df.groupby('user_id')
-    
+
     user_features = user_grp.agg(
         user_total_events=('event', 'count'),
         user_views=('event', lambda x: (x == 'view').sum()),
@@ -48,7 +48,7 @@ def build_features():
     # 2. Item Profile Features (Computed strictly on train set)
     print("Engineering item features...")
     item_grp = train_df.groupby('item_id')
-    
+
     item_features = item_grp.agg(
         item_total_events=('event', 'count'),
         item_views=('event', lambda x: (x == 'view').sum()),
@@ -87,8 +87,8 @@ def build_features():
 
     # Merge candidates with ground truth
     dataset = candidates.merge(
-        test_ground_truth[['user_id', 'item_id', 'label']], 
-        on=['user_id', 'item_id'], 
+        test_ground_truth[['user_id', 'item_id', 'label']],
+        on=['user_id', 'item_id'],
         how='left'
     )
     dataset['label'] = dataset['label'].fillna(0).astype(int)

@@ -1,7 +1,7 @@
 # Production A/B Testing Proposal: Two-Stage Ranker vs. Popularity Baseline
 
 ## 1. Objective & Hypothesis
-* **Business Context**: The current candidate generation system serves global popularity baselines to cold users and simple top-ranked items. 
+* **Business Context**: The current candidate generation system serves global popularity baselines to cold users and simple top-ranked items.
 * **Hypothesis**: Replacing the raw popularity baseline with an Alternating Least Squares (ALS) candidate retrieval layer + LightGBM LambdaMART re-ranker will increase Click-Through Rate (CTR) and item discovery without violating latency Service Level Objectives (SLOs < 50ms).
 
 ---

@@ -7,11 +7,11 @@ The primary ranking drivers identified by SHAP TreeExplainer are:
 3. **user_days_since_last_event**: Governs temporal decay of user interest.
 
 ## 2. Quantitative Failure Case Inspection
-Examined `109` instances where relevant candidate items dropped out of the top 10 recommendations:
+Examined `150` instances where relevant candidate items dropped out of the top 10 recommendations:
 
-* **Median Rank of Missed Relevant Items**: 36.0
-* **Mean Historical Item Interactions for Missed Targets**: 29.40 events
-* **Mean Target Retrieval Score**: 0.0703
+* **Median Rank of Missed Relevant Items**: 35.0
+* **Mean Historical Item Interactions for Missed Targets**: 36.11 events
+* **Mean Target Retrieval Score**: 0.0586
 
 ### Root Causes of Degradation:
 1. **Cold Interaction Sparsity (Item-Side)**: Relevant items with few historical interactions suffer lower ranker scores despite strong retrieval signals because popularity features suppress cold/novel products.

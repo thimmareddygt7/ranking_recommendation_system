@@ -23,7 +23,7 @@ def train_retrieval_models(top_n: int = 100):
         .reset_index()
     )
     top_popular_items = item_pop['item_id'].head(top_n).tolist()
-    
+
     with open(os.path.join(MODELS_PATH, "popularity_baseline.pkl"), "wb") as f:
         pickle.dump(top_popular_items, f)
 
@@ -48,13 +48,13 @@ def train_retrieval_models(top_n: int = 100):
 
     # Aggregate interaction weights for user-item pairs
     grouped_train = train_df.groupby(['user_id', 'item_id'])['event_weight'].sum().reset_index()
-    
+
     rows = grouped_train['user_id'].map(user_to_idx).values
     cols = grouped_train['item_id'].map(item_to_idx).values
     data = grouped_train['event_weight'].values
 
     user_item_matrix = sp.csr_matrix(
-        (data, (rows, cols)), 
+        (data, (rows, cols)),
         shape=(len(unique_users), len(unique_items)),
         dtype=np.float32
     )
@@ -79,12 +79,16 @@ def train_retrieval_models(top_n: int = 100):
     print(f"Generating top-{top_n} candidates for {len(test_users):,} test users...")
 
     test_user_indices = np.array([user_to_idx[uid] for uid in test_users if uid in user_to_idx])
-    
-    # Batch recommend
+
+        # Batch recommend
+    # filter_already_liked_items=False is a deliberate choice: repeat views/
+    # purchases are common and meaningful in e-commerce (restocks, repeat
+    # buys), so previously-interacted items are kept eligible as candidates
+    # rather than excluded by default.
     ids, scores = als_model.recommend(
-        test_user_indices, 
-        user_item_matrix[test_user_indices], 
-        N=top_n, 
+        test_user_indices,
+        user_item_matrix[test_user_indices],
+        N=top_n,
         filter_already_liked_items=False
     )
 

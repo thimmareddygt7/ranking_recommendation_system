@@ -9,11 +9,11 @@ os.makedirs(PROCESSED_PATH, exist_ok=True)
 def clean_and_split():
     print("Loading events...")
     df = pd.read_csv(os.path.join(RAW_PATH, "events.csv"))
-    
+
     # Standardize column names
     df.rename(columns={'visitorid': 'user_id', 'itemid': 'item_id'}, inplace=True)
     df['datetime'] = pd.to_datetime(df['timestamp'], unit='ms')
-    
+
     # Assign implicit weights: view=1, addtocart=2, transaction=3
     weight_map = {'view': 1, 'addtocart': 2, 'transaction': 3}
     df['event_weight'] = df['event'].map(weight_map)
@@ -21,10 +21,17 @@ def clean_and_split():
     # 1. Deduplication
     df = df.drop_duplicates(subset=['user_id', 'item_id', 'timestamp'])
 
-    # 2. Filter bots & high-frequency anomalies
+      # 2. Filter bots & high-frequency anomalies
+    # Lower bound relaxed from 3 to 2: a threshold of 3 discarded the vast
+    # majority of users in this highly sparse dataset. Document this
+    # tradeoff explicitly in the README rather than silently shrinking data.
+    n_before = len(df)
+    users_before = df['user_id'].nunique()
     user_counts = df['user_id'].value_counts()
-    valid_users = user_counts[(user_counts >= 3) & (user_counts <= 500)].index
+    valid_users = user_counts[(user_counts >= 2) & (user_counts <= 500)].index
     df = df[df['user_id'].isin(valid_users)].copy()
+    print(f"Bot/anomaly filter: {users_before:,} -> {df['user_id'].nunique():,} users, "
+          f"{n_before:,} -> {len(df):,} events")
 
     # 3. Compute sparsity profile
     n_users = df['user_id'].nunique()

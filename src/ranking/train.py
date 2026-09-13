@@ -16,7 +16,7 @@ def compute_ndcg_at_k(actual_items, ranked_items, k=10):
     for idx, item in enumerate(ranked_k):
         if item in actual_items:
             dcg += 1.0 / np.log2(idx + 2)
-            
+
     # Ideal DCG
     idcg = sum([1.0 / np.log2(i + 2) for i in range(min(len(actual_items), k))])
     if idcg == 0:
@@ -35,7 +35,7 @@ def train_and_evaluate():
     print("Loading ranking dataset...")
     df = pd.read_parquet(os.path.join(PROCESSED_PATH, "ranking_dataset.parquet"))
     test_df = pd.read_parquet(os.path.join(PROCESSED_PATH, "test_events.parquet"))
-    
+
     with open(os.path.join(MODELS_PATH, "popularity_baseline.pkl"), "rb") as f:
         top_popular_items = pickle.load(f)
 
@@ -98,7 +98,7 @@ def train_and_evaluate():
 
     # 3. Full Benchmark on Validation Users
     print("\nEvaluating Popularity vs. ALS vs. LightGBM Ranker on Held-out Users...")
-    
+
     val_data = val_data.copy()
     val_data['predicted_score'] = ranker.predict(X_val)
 

@@ -45,7 +45,7 @@ def run_error_analysis():
 
     # 2. Identify Failure Modes (False Negatives: ground-truth items ranked outside top 10)
     user_actuals = test_df.groupby('user_id')['item_id'].apply(set).to_dict()
-    
+
     failure_cases = []
     success_cases = []
 

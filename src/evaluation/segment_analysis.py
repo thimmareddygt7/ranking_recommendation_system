@@ -40,7 +40,7 @@ def run_segment_analysis():
     df = pd.read_parquet(os.path.join(PROCESSED_PATH, "ranking_dataset.parquet"))
     test_df = pd.read_parquet(os.path.join(PROCESSED_PATH, "test_events.parquet"))
     train_df = pd.read_parquet(os.path.join(PROCESSED_PATH, "train_events.parquet"))
-    
+
     ranker = lgb.Booster(model_file=os.path.join(MODELS_PATH, "ranker_model.txt"))
 
     feature_cols = [
@@ -60,7 +60,7 @@ def run_segment_analysis():
 
     # Define User Segments: Cold (<= 5 events) vs Warm (> 5 events)
     user_counts = train_df.groupby('user_id').size().to_dict()
-    
+
     # Define Item Segments: Head (top 20% by interaction) vs Long-Tail (bottom 80%)
     item_counts = train_df.groupby('item_id').size().sort_values(ascending=False)
     top_20_pct_idx = int(len(item_counts) * 0.20)
@@ -68,21 +68,21 @@ def run_segment_analysis():
 
     # Collect per-user metrics
     user_records = []
-    
+
     for uid, group in df.groupby('user_id'):
         actuals = user_actuals.get(uid, set())
         if not actuals:
             continue
 
         lgb_ranked = group.sort_values('pred_score', ascending=False)['item_id'].tolist()
-        
+
         ndcg = compute_ndcg_at_k(actuals, lgb_ranked, k=10)
         map_score = compute_map_at_k(actuals, lgb_ranked, k=10)
         mrr = compute_mrr(actuals, lgb_ranked, k=10)
-        
+
         n_history = user_counts.get(uid, 0)
         user_segment = "Cold (<=5)" if n_history <= 5 else "Warm (>5)"
-        
+
         # Check proportion of recommended items from the head
         recs_at_10 = lgb_ranked[:10]
         head_rec_ratio = sum([1 for item in recs_at_10 if item in head_items]) / 10.0
@@ -108,7 +108,7 @@ def run_segment_analysis():
     }).rename(columns={'user_id': 'user_count'})
 
     user_segment_summary.to_csv(os.path.join(RESULTS_PATH, "segment_user_performance.csv"))
-    
+
     print("\n--- User Segment Performance Breakdown ---")
     print(user_segment_summary.round(4).to_string())
 

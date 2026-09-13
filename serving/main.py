@@ -32,16 +32,16 @@ feature_cols = [
 def load_artifacts():
     global ranker, cold_start_handler, feature_store, candidate_store
     print("Loading models and candidate stores into memory...")
-    
+
     # 1. Load trained LightGBM ranker
     ranker = lgb.Booster(model_file=os.path.join(MODELS_PATH, "ranker_model.txt"))
-    
+
     # 2. Load cold-start fallback handler
     cold_start_handler = ColdStartHandler()
-    
+
     # 3. Load precomputed candidates and pre-engineered feature table
     full_df = pd.read_parquet(os.path.join(PROCESSED_PATH, "ranking_dataset.parquet"))
-    
+
     # Group candidates and features by user_id for fast in-memory indexing
     candidate_store = {
         uid: group[['item_id'] + feature_cols].copy()

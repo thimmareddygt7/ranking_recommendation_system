@@ -15,7 +15,7 @@ client = TestClient(app)
 def test_warm_user_recommendation():
     # Dynamically select an existing warm user from the loaded store
     warm_user_id = int(list(serving_module.candidate_store.keys())[0])
-    
+
     response = client.get(f"/recommend/{warm_user_id}?k=5")
     assert response.status_code == 200
     data = response.json()
