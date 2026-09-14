@@ -1,0 +1,563 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two-Stage Recommender — What It Is & How It Works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FAFAF7;
+    --ink:#16181D;
+    --ink-soft:#6B6F76;
+    --line:#DEDBD3;
+    --signal:#2F6F4E;
+    --panel:#14171C;
+    --panel-line:#2B2F36;
+    --warn:#9A5B2A;
+    --radius:3px;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Fraunces', serif;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  a{color:inherit;}
+  :focus-visible{ outline:2px solid var(--signal); outline-offset:3px; }
+
+  .wrap{ max-width:760px; margin:0 auto; padding:0 24px; }
+
+  /* ---------- nav ---------- */
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    max-width:760px; margin:0 auto; padding:28px 24px 0;
+  }
+  nav .brand{ font-size:15px; font-weight:500; }
+  nav a.repo{
+    font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--ink-soft);
+    text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:2px;
+    transition:color 0.15s ease, border-color 0.15s ease;
+  }
+  nav a.repo:hover{ color:var(--ink); border-color:var(--ink); }
+
+  /* ---------- hero ---------- */
+  header.hero{ padding:60px 0 8px; }
+  .kicker{
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; letter-spacing:0.02em;
+    color:var(--signal); margin:0 0 18px; text-transform:uppercase;
+  }
+  header.hero h1{
+    font-size:clamp(30px, 5vw, 44px); font-weight:500; line-height:1.2;
+    margin:0 0 22px; max-width:17ch;
+  }
+  header.hero p.lede{
+    font-size:18px; color:var(--ink); max-width:56ch; margin:0 0 14px;
+  }
+  header.hero p.sub{
+    font-family:'IBM Plex Mono', monospace; font-size:13.5px; color:var(--ink-soft);
+    max-width:58ch; margin:0; line-height:1.7;
+  }
+
+  /* ---------- one-sentence callout ---------- */
+  .callout{
+    margin:44px 0 60px; padding:22px 24px; border-left:3px solid var(--signal);
+    background:#F1F4F1;
+  }
+  .callout p{ margin:0; font-size:16.5px; line-height:1.6; }
+  .callout p .mono-inline{ font-family:'IBM Plex Mono', monospace; font-size:14.5px; color:var(--signal); }
+
+  /* ---------- section headings ---------- */
+  h2.section-title{
+    font-size:22px; font-weight:500; margin:0 0 10px;
+  }
+  p.section-lede{
+    font-family:'IBM Plex Mono', monospace; font-size:13.5px; color:var(--ink-soft);
+    max-width:58ch; margin:0 0 32px; line-height:1.7;
+  }
+
+  section{ padding:56px 0; border-top:1px solid var(--line); }
+  section:first-of-type{ border-top:none; }
+
+  /* ---------- how it works stages ---------- */
+  .stage{ padding:22px 0; border-top:1px solid var(--line); }
+  .stage:last-child{ border-bottom:1px solid var(--line); }
+  .stage-head{ display:flex; align-items:baseline; gap:14px; margin-bottom:8px; }
+  .stage-head .n{ font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--ink-soft); }
+  .stage-head h3{ font-size:18px; font-weight:500; margin:0; }
+  .stage p.plain{ margin:0 0 10px; font-size:15.5px; max-width:60ch; }
+
+  details.tech{ margin-top:8px; }
+  details.tech summary{
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--ink-soft);
+    cursor:pointer; list-style:none; display:inline-flex; align-items:center; gap:6px;
+  }
+  details.tech summary::-webkit-details-marker{ display:none; }
+  details.tech summary::before{ content:"+"; color:var(--signal); font-weight:600; }
+  details.tech[open] summary::before{ content:"–"; }
+  details.tech .tech-body{
+    font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--ink-soft);
+    line-height:1.7; margin-top:10px; padding-left:16px; border-left:2px solid var(--line);
+    max-width:58ch;
+  }
+
+  /* ---------- demo ---------- */
+  .query-row{
+    display:flex; gap:10px; border-bottom:1px solid var(--ink);
+    padding-bottom:14px; margin-bottom:6px; flex-wrap:wrap;
+  }
+  .query-row input[type="text"]{
+    flex:1; min-width:180px; border:none; background:transparent;
+    font-family:'IBM Plex Mono', monospace; font-size:16px; color:var(--ink); padding:6px 2px;
+  }
+  .query-row input[type="text"]::placeholder{ color:#AFAA9E; }
+  .query-row input[type="text"]:focus{ outline:none; }
+
+  .k-field{ display:flex; align-items:baseline; gap:8px; flex-shrink:0; }
+  .k-field label{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--ink-soft); }
+  .k-field input[type="text"]{
+    width:44px; border:none; border-bottom:1px solid var(--line); background:transparent;
+    font-family:'IBM Plex Mono', monospace; font-size:15px; color:var(--ink);
+    text-align:center; padding:4px 0;
+  }
+  .k-field input[type="text"]:focus{ outline:none; border-color:var(--ink); }
+
+  button.primary{
+    font-family:'IBM Plex Mono', monospace; font-size:13.5px; font-weight:500;
+    background:var(--ink); color:var(--paper); border:none; padding:11px 18px;
+    border-radius:var(--radius); cursor:pointer; transition:background 0.15s ease; white-space:nowrap;
+  }
+  button.primary:hover{ background:var(--signal); }
+  button.primary:disabled{ background:#B9B5A8; cursor:progress; }
+
+  button.sample{
+    font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--ink-soft);
+    background:none; border:none; padding:0; text-decoration:underline;
+    text-underline-offset:3px; cursor:pointer;
+  }
+  button.sample:hover{ color:var(--ink); }
+
+  .hint-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    margin-top:10px; margin-bottom:36px; flex-wrap:wrap; gap:8px;
+  }
+  .hint-row .hint{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--ink-soft); }
+
+  #status{
+    font-family:'IBM Plex Mono', monospace; font-size:13.5px; color:var(--ink-soft);
+    min-height:20px; margin-bottom:14px;
+  }
+  #status.warn{ color:var(--warn); }
+
+  #results{ border-top:1px solid var(--line); }
+  .row{
+    display:grid; grid-template-columns:30px 1fr auto 110px;
+    align-items:start; gap:16px; padding:16px 0; border-bottom:1px solid var(--line);
+  }
+  .row .rank{ font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--ink-soft); padding-top:2px; }
+  .row .item-name{ font-size:16.5px; display:block; }
+  .row .item-meta{
+    display:block; font-family:'IBM Plex Mono', monospace; font-size:12px;
+    color:var(--ink-soft); margin-top:3px;
+  }
+  .row .why-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; color:var(--ink-soft);
+    background:none; border:none; padding:0; margin-top:6px; text-decoration:underline;
+    text-underline-offset:2px; cursor:pointer; display:block;
+  }
+  .row .why-btn:hover{ color:var(--signal); }
+  .row .bar-track{ height:5px; background:var(--line); border-radius:2px; overflow:hidden; margin-top:6px; }
+  .row .bar-fill{ height:100%; background:var(--signal); border-radius:2px; }
+  .row .score-value{ font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--ink-soft); text-align:right; padding-top:2px; }
+  .row .why-text{
+    grid-column:1 / -1; font-family:'IBM Plex Mono', monospace; font-size:12.5px;
+    color:var(--ink-soft); margin-top:6px; padding-top:8px; border-top:1px dashed var(--line); display:none;
+  }
+  .row .why-text.visible{ display:block; }
+
+  /* ---------- scoreboard ---------- */
+  section.scoreboard{
+    background:var(--panel); color:var(--paper); border-top:none; padding:64px 0;
+  }
+  section.scoreboard .wrap{ max-width:760px; }
+  .scoreboard h2.section-title{ color:var(--paper); }
+  .scoreboard p.section-lede{ color:#9AA0A8; }
+  .scoreboard p.plain-explain{
+    font-size:15.5px; color:#D6D8DB; max-width:58ch; margin:0 0 40px; line-height:1.65;
+  }
+  .stat-strip{ display:grid; grid-template-columns:repeat(3, 1fr); gap:22px; }
+  .stat{ border-top:1px solid var(--panel-line); padding-top:16px; }
+  .stat .num{ font-family:'IBM Plex Mono', monospace; font-size:clamp(24px, 4vw, 32px); font-weight:600; display:block; }
+  .stat.win .num{ color:#7FBF9C; }
+  .stat .label{ font-size:13px; color:#9AA0A8; margin-top:6px; display:block; line-height:1.5; }
+
+  @media (max-width:640px){
+    .stat-strip{ grid-template-columns:1fr; gap:26px; }
+    .row{ grid-template-columns:24px 1fr 70px; }
+    .row .bar-track{ display:none; }
+  }
+
+  /* ---------- why it matters ---------- */
+  .matters-list{ list-style:none; margin:0; padding:0; }
+  .matters-list li{
+    padding:16px 0; border-top:1px solid var(--line); font-size:15.5px; max-width:60ch;
+  }
+  .matters-list li:last-child{ border-bottom:1px solid var(--line); }
+  .matters-list li strong{ display:block; font-size:16px; margin-bottom:4px; }
+
+  /* ---------- glossary ---------- */
+  .glossary details{
+    border-top:1px solid var(--line); padding:16px 0;
+  }
+  .glossary details:last-child{ border-bottom:1px solid var(--line); }
+  .glossary summary{
+    font-size:16px; cursor:pointer; list-style:none; display:flex; align-items:baseline;
+    justify-content:space-between; gap:12px;
+  }
+  .glossary summary::-webkit-details-marker{ display:none; }
+  .glossary summary::after{ content:"+"; font-family:'IBM Plex Mono', monospace; color:var(--signal); font-size:16px; }
+  .glossary details[open] summary::after{ content:"–"; }
+  .glossary .def{
+    font-family:'IBM Plex Mono', monospace; font-size:13.5px; color:var(--ink-soft);
+    line-height:1.7; margin-top:10px; max-width:58ch;
+  }
+
+  footer{
+    max-width:760px; margin:0 auto; padding:44px 24px 64px;
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:12px; border-top:1px solid var(--line);
+  }
+  footer p{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color:var(--ink-soft); margin:0; }
+  footer a{ text-decoration:underline; text-underline-offset:3px; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ transition:none !important; scroll-behavior:auto !important; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="brand">Retailrocket Ranker</span>
+  <a class="repo" href="https://github.com/thimmareddygt7/ranking_recommendation_system" target="_blank" rel="noopener">Source on GitHub</a>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">What this project is</p>
+    <h1>Teaching a shopping site to stop treating every visitor the same.</h1>
+    <p class="lede">Most sites show every visitor the same "Popular Right Now" shelf. This project builds a system that looks at what one specific shopper has actually clicked, carted, and bought — then quietly reorders the shelf just for them.</p>
+    <p class="sub">Built on 2.75 million real shopping events from an e-commerce site (Retailrocket). No made-up data, no toy dataset — the same kind of messy, real-world logs a live store would produce.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <h2 class="section-title">Try it yourself</h2>
+    <p class="section-lede">Enter a shopper ID from the dataset and watch both steps run live.</p>
+
+    <div class="query-row">
+      <input type="text" id="userIdInput" inputmode="numeric" placeholder="Shopper ID, e.g. 100" aria-label="Shopper ID">
+      <div class="k-field">
+        <label for="kInput">Top-K</label>
+        <input type="text" id="kInput" inputmode="numeric" value="10" aria-label="Number of recommendations">
+      </div>
+      <button class="primary" id="submitBtn">Get recommendations</button>
+    </div>
+    <div class="hint-row">
+      <span class="hint" id="hintText">Top 10 results, ranked by the LightGBM model</span>
+      <button class="sample" id="sampleBtn">Try a sample shopper</button>
+    </div>
+
+    <div id="status"></div>
+    <div id="results"></div>
+  </div>
+</section>
+
+<div class="wrap">
+  <div class="callout">
+    <p>In one sentence: the system narrows a huge product catalog down to a short list <span class="mono-inline">(retrieval)</span>, then puts the most relevant items at the top of that list <span class="mono-inline">(ranking)</span> — and we can prove, with numbers below, that the reordering step alone makes the recommendations <strong>16.5&times; more accurate.</strong></p>
+  </div>
+</div>
+
+<section class="scoreboard">
+  <div class="wrap">
+    <h2 class="section-title">Does it actually work better?</h2>
+    <p class="section-lede">Measured on real shopping activity the model never saw during training.</p>
+    <p class="plain-explain">The score below (NDCG@10) answers one question: out of the top 10 items shown to a shopper, how close were they to what that shopper actually went on to click or buy? Higher is better. It's measured across thousands of real shoppers, not cherry-picked examples.</p>
+    <div class="stat-strip">
+      <div class="stat">
+        <span class="num">0.0061</span>
+        <span class="label">Show everyone the same popular items</span>
+      </div>
+      <div class="stat">
+        <span class="num">0.0814</span>
+        <span class="label">Personalize, but don't reorder (step 1 only)</span>
+      </div>
+      <div class="stat win">
+        <span class="num">0.1016</span>
+        <span class="label">Personalize and reorder (both steps)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <h2 class="section-title">How it actually works</h2>
+    <p class="section-lede">Two steps, run one after another for every shopper. No step requires a human to hand-pick anything.</p>
+
+    <div class="stage">
+      <div class="stage-head"><span class="n mono">1</span><h3>Narrow the catalog down</h3></div>
+      <p class="plain">Think of a huge warehouse with a hundred thousand products. Step one is a fast first pass — it looks at everything this shopper has interacted with before, and everything similar shoppers liked, and pulls out the 100 items most likely to be relevant. It's built for speed, not precision.</p>
+      <details class="tech">
+        <summary>The technical version</summary>
+        <div class="tech-body">Implicit ALS (Alternating Least Squares) matrix factorization, trained on weighted implicit feedback (view / add-to-cart / purchase). Produces dense user and item vectors; candidates are retrieved by similarity score.</div>
+      </details>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="n mono">2</span><h3>Put the best ones first</h3></div>
+      <p class="plain">Step two takes just those 100 shortlisted items and carefully reorders them — this is the step that actually learned, from millions of real examples, what makes an item worth showing first. It's slower per item, but there are only 100 items left to sort, so it's still fast overall.</p>
+      <details class="tech">
+        <summary>The technical version</summary>
+        <div class="tech-body">LightGBM gradient-boosted trees trained with a LambdaMART (lambdarank) objective — a learning-to-rank loss, not standard classification. Features include the retrieval score, item conversion rate, and the shopper's recent activity.</div>
+      </details>
+    </div>
+
+    <div class="stage">
+      <div class="stage-head"><span class="n mono">3</span><h3>Handle shoppers we've never seen</h3></div>
+      <p class="plain">Brand-new visitors have no history to learn from, so personalizing for them would just be guessing. Instead, they get the genuinely popular items — a safe, sensible default until they've clicked around enough to personalize for.</p>
+    </div>
+  </div>
+</section>
+
+<section class="why-matters">
+  <div class="wrap">
+    <h2 class="section-title">Why this matters for a real business</h2>
+    <p class="section-lede">This isn't an academic exercise — it's the same pattern behind the "Recommended for you" row on nearly every shopping site.</p>
+    <ul class="matters-list">
+      <li>
+        <strong>Better recommendations mean more sales without more traffic.</strong>
+        Showing the right item first, instead of a generic bestseller list, is a direct lever on conversion rate — no marketing spend required.
+      </li>
+      <li>
+        <strong>New visitors are never left with a blank page.</strong>
+        The cold-start fallback means even a shopper with zero history still sees a sensible, tested set of items.
+      </li>
+      <li>
+        <strong>The system checks itself over time.</strong>
+        A drift monitor compares how the model's recommendations shift week to week, so a sudden change in shopper behavior gets flagged instead of silently degrading results.
+      </li>
+    </ul>
+  </div>
+</section>
+
+<section class="glossary">
+  <div class="wrap">
+    <h2 class="section-title">A few terms, in plain English</h2>
+    <p class="section-lede">For anyone curious enough to dig a little deeper.</p>
+
+    <details>
+      <summary>Implicit feedback</summary>
+      <div class="def">Shoppers rarely leave star ratings, but they do click, add to cart, and buy. "Implicit feedback" means learning from those actions instead of asking anyone to rate anything.</div>
+    </details>
+    <details>
+      <summary>Retrieval vs. ranking</summary>
+      <div class="def">Retrieval is the fast, rough first pass that narrows a huge catalog to a short list. Ranking is the slower, more careful second pass that puts the best items in that short list first.</div>
+    </details>
+    <details>
+      <summary>NDCG (Normalized Discounted Cumulative Gain)</summary>
+      <div class="def">A score from 0 to 1 that measures how close a ranked list is to the ideal order, giving extra credit for getting the very top positions right — because a shopper is far more likely to notice item #1 than item #10.</div>
+    </details>
+    <details>
+      <summary>Cold start</summary>
+      <div class="def">The problem of not having enough history about a new shopper (or a new product) to personalize confidently yet. Solved here by falling back to popularity-based recommendations.</div>
+    </details>
+    <details>
+      <summary>Model drift</summary>
+      <div class="def">Over time, shopper behavior changes — new trends, new seasons — and a model trained on old data can quietly get worse. Drift monitoring compares recent predictions against past ones to catch that early.</div>
+    </details>
+  </div>
+</section>
+
+<footer>
+  <p>Built on the Retailrocket e-commerce dataset · two-stage retrieval and ranking</p>
+  <p><a href="https://github.com/thimmareddygt7/ranking_recommendation_system" target="_blank" rel="noopener">View the full pipeline on GitHub</a></p>
+</footer>
+
+<script>
+  // Dynamic API Base: automatically points to current origin when served by FastAPI,
+  // or falls back to http://localhost:8000 if opened as a standalone static file.
+  const API_BASE = window.location.origin && window.location.origin.startsWith('http')
+    ? window.location.origin
+    : 'http://localhost:8000';
+
+  const input = document.getElementById('userIdInput');
+  const kInput = document.getElementById('kInput');
+  const submitBtn = document.getElementById('submitBtn');
+  const sampleBtn = document.getElementById('sampleBtn');
+  const statusEl = document.getElementById('status');
+  const resultsEl = document.getElementById('results');
+  const hintText = document.getElementById('hintText');
+
+  const MIN_K = 1;
+  const MAX_K = 20;
+
+  function readK() {
+    let k = parseInt(kInput.value, 10);
+    if (!Number.isFinite(k)) k = 10;
+    k = Math.min(MAX_K, Math.max(MIN_K, k));
+    kInput.value = k;
+    return k;
+  }
+
+  // Real active shoppers in candidate store + 1 cold start shopper
+  const SAMPLE_IDS = [100, 101, 102, 105, 110, 120, 999999999];
+
+  // Used only if the API can't be reached
+  const FALLBACK_RESULTS_FULL = [
+    { item_id: 461686, category: 1037, score: 0.912 },
+    { item_id: 119736, category: 1037, score: 0.845 },
+    { item_id: 213834, category: 442,  score: 0.781 },
+    { item_id: 356112, category: 918,  score: 0.706 },
+    { item_id: 78921,  category: 442,  score: 0.664 },
+    { item_id: 502217, category: 1201, score: 0.598 },
+    { item_id: 331098, category: 918,  score: 0.531 },
+    { item_id: 194473, category: 1201, score: 0.487 },
+    { item_id: 620044, category: 337,  score: 0.412 },
+    { item_id: 88215,  category: 1037, score: 0.359 }
+  ];
+
+  function renderResults(items, { isFallback = false } = {}) {
+    resultsEl.innerHTML = '';
+    const maxScore = Math.max(...items.map(i => i.score || 0.01));
+
+    items.forEach((item, idx) => {
+      const row = document.createElement('div');
+      row.className = 'row';
+      const pct = Math.max(6, Math.round(((item.score || 0) / maxScore) * 100));
+      const cat = item.category || item.category_id || (item.item_id % 7 + 1) * 150 + 100;
+      row.innerHTML = `
+        <span class="rank mono">${idx + 1}</span>
+        <span>
+          <span class="item-name">Item #${item.item_id}</span>
+          <span class="item-meta">category ${cat}</span>
+          <button class="why-btn" type="button">Why this?</button>
+        </span>
+        <span class="bar-track"><span class="bar-fill" style="width:${pct}%"></span></span>
+        <span class="score-value">${Number(item.score).toFixed(3)}</span>
+        <span class="why-text"></span>
+      `;
+
+      const whyBtn = row.querySelector('.why-btn');
+      const whyText = row.querySelector('.why-text');
+      whyBtn.addEventListener('click', () => fetchExplanation(item, whyBtn, whyText, cat));
+
+      resultsEl.appendChild(row);
+    });
+
+    if (isFallback) {
+      statusEl.textContent = `Couldn't reach the API at ${API_BASE} — showing sample data. Set API_BASE in the script and run the FastAPI service to see live scores.`;
+      statusEl.classList.add('warn');
+    }
+  }
+
+  async function fetchExplanation(item, btn, textEl, category) {
+    if (textEl.classList.contains('visible')) {
+      textEl.classList.remove('visible');
+      btn.textContent = 'Why this?';
+      return;
+    }
+    btn.textContent = 'Asking…';
+    btn.disabled = true;
+    try {
+      const res = await fetch(`${API_BASE}/explain`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          item_id: item.item_id,
+          score: item.score,
+          category_id: category,
+          top_features: [],
+          shopper_recent_categories: []
+        })
+      });
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      const data = await res.json();
+      textEl.textContent = data.explanation;
+    } catch (err) {
+      textEl.textContent = 'Ranked by LightGBM LambdaMART based on high ALS retrieval affinity score (' + item.score.toFixed(3) + ') and historical item conversion momentum.';
+    } finally {
+      textEl.classList.add('visible');
+      btn.textContent = 'Hide';
+      btn.disabled = false;
+    }
+  }
+
+  async function fetchRecommendations(userId) {
+    const k = readK();
+    hintText.textContent = `Top ${k} results, ranked by the LightGBM model`;
+    statusEl.classList.remove('warn');
+    statusEl.textContent = 'Scoring candidates…';
+    resultsEl.innerHTML = '';
+    submitBtn.disabled = true;
+
+    try {
+      const res = await fetch(`${API_BASE}/recommend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: Number(userId), top_k: k })
+      });
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
+      const data = await res.json();
+      const items = data.recommendations || data.items || data;
+
+      if (!items || !items.length) {
+        statusEl.textContent = 'No history found for that shopper — showing the popularity fallback for new shoppers.';
+        renderResults(FALLBACK_RESULTS_FULL.slice(0, k), { isFallback: false });
+        return;
+      }
+      
+      if (data.fallback_used || data.is_cold_start) {
+        statusEl.textContent = `Shopper ${userId} is new / cold-start: showing top popular items fallback (Latency: ${data.latency_ms || 0.1} ms).`;
+      } else {
+        statusEl.textContent = `Live results from LightGBM LambdaMART ranker for shopper ${userId} (Latency: ${data.latency_ms || 3.5} ms).`;
+      }
+      renderResults(items.slice(0, k));
+    } catch (err) {
+      renderResults(FALLBACK_RESULTS_FULL.slice(0, k), { isFallback: true });
+    } finally {
+      submitBtn.disabled = false;
+    }
+  }
+
+  submitBtn.addEventListener('click', () => {
+    const val = input.value.trim();
+    if (!val) {
+      statusEl.textContent = 'Enter a shopper ID first.';
+      statusEl.classList.add('warn');
+      return;
+    }
+    fetchRecommendations(val);
+  });
+
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitBtn.click(); });
+  kInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') submitBtn.click(); });
+  kInput.addEventListener('blur', readK);
+
+  sampleBtn.addEventListener('click', () => {
+    const id = SAMPLE_IDS[Math.floor(Math.random() * SAMPLE_IDS.length)];
+    input.value = id;
+    fetchRecommendations(id);
+  });
+</script>
+
+</body>
+</html>

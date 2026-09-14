@@ -22,11 +22,13 @@ def run_pipeline(config_path: str = "config.yaml"):
 
     # 2. Stage 1: Retrieval check / placeholder execution
     logger.info("Stage 1: Validating ALS Matrix Factorization retrieval model...")
-    als_model_file = models_dir / "mf_model.pkl"
+    als_model_file = models_dir / "als_model.pkl"
+    if not als_model_file.exists():
+        als_model_file = models_dir / "mf_model.pkl"
     if als_model_file.exists():
         logger.info(f"Loaded existing ALS model from {als_model_file}")
     else:
-        logger.warning("No pre-saved ALS model found. Run notebooks/03_candidate_generation.ipynb to persist.")
+        logger.warning("No pre-saved ALS model found. Run notebooks/03_candidate_generation.ipynb or src/retrieval/candidate_generator.py to persist.")
 
     # 3. Stage 2: Ranking check / placeholder execution
     logger.info("Stage 2: Validating LightGBM LambdaMART ranker...")
