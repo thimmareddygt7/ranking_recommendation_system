@@ -1,14 +1,20 @@
-# Raw and processed datasets
+# Raw and large datasets
 data/raw/
-data/processed/*.parquet
-*.parquet
 *.csv
 
-# Cache and checkpoints
+# Cache and virtual environments
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/
 .pytest_cache/
+.venv/
 
-# Large model artifacts (optional, if >100MB)
-models/*.pkl
+# Parquet files (except the demo ranking dataset for Streamlit deployment)
+data/processed/*.parquet
+!data/processed/ranking_dataset.parquet
+
+# Allow compact model artifacts needed for deployment
+!models/popularity_baseline.pkl
+!models/id_mappings.pkl
+!models/als_model.pkl
+
